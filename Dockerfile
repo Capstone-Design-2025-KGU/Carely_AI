@@ -11,4 +11,4 @@ COPY /app .
 
 RUN python download_models.py
 EXPOSE 8000
-ENTRYPOINT ["uvicorn","main:app","--reload"]
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "5"]
