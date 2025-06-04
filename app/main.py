@@ -11,6 +11,14 @@ app = FastAPI()
 
 okt = Okt()
 
+MANUAL_SYNONYM_MAP = {
+    "복용": "약", "드셨": "약", "드신": "약", "복용하": "약", "투약": "약",
+    "좋아졌": "좋다", "좋아보였": "좋다", "웃": "좋다",
+    "기분": "정서", "통화": "정서", "전화": "정서",
+    "산책": "운동", "운동": "운동", "걷": "운동",
+    "소변": "배뇨", "대변": "배변", "화장실": "배변",
+    "기침": "기침", "咳": "기침", "콜록": "기침"
+}
 
 # 모델 로딩 (1회만)
 MODEL_NAME = "EbanLee/kobart-summary-v3"
@@ -55,10 +63,16 @@ def classify_notes(notes: str) -> Dict[str, List[str]]:
     return categorized
 
 def normalize_sentence(sentence: str) -> str:
-    # 형태소 분석 → 어간 기준으로 normalize
     tokens = okt.pos(sentence, stem=True)  # stem=True → 동사 원형화됨
-    # 품사 중 명사(Noun), 동사(Verb), 형용사(Adjective)만 추출
-    normalized = [word for word, tag in tokens if tag in ['Noun', 'Verb', 'Adjective']]
+    normalized = []
+    for word, tag in tokens:
+        if tag in ['Noun', 'Verb', 'Adjective']:
+            base = word
+            for key, val in MANUAL_SYNONYM_MAP.items():
+                if key in word:
+                    base = val
+                    break
+            normalized.append(base)
     return " ".join(normalized)
 
 def remove_semantic_duplicates(sentences):
@@ -70,8 +84,9 @@ def remove_semantic_duplicates(sentences):
             seen.add(norm)
             result.append(s)
         else:
-            print(f"[중복 제거됨] {s} → ({norm})")
+            print(f"[중복 제거됨] {s} → ({norm})")  # ✅ 디버깅 로그
     return result
+
 
 
 
