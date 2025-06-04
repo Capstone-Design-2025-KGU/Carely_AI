@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 import json
 import os
@@ -30,8 +31,13 @@ Respond ONLY with a valid JSON. Do not explain anything.
 Memo:
 {memo}
 """)
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.3,api_key=os.getenv("OPENAI_API_KEY")
-)
+    
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-pro",
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+        temperature=0.3
+    )
+
     chain = prompt_template | llm
 
     result = chain.invoke({"memo": req.memo})
