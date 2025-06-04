@@ -69,7 +69,10 @@ def remove_semantic_duplicates(sentences):
         if norm not in seen:
             seen.add(norm)
             result.append(s)
+        else:
+            print(f"[중복 제거됨] {s} → ({norm})")
     return result
+
 
 
 # 텍스트 요약
