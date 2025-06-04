@@ -49,26 +49,44 @@ def classify_notes(notes: str) -> Dict[str, List[str]]:
 
     return categorized
 
+def normalize_sentence(s):
+    return re.sub(r"\s+", "", s).replace("를", "").replace("을", "").replace("가", "").rstrip("다").rstrip("습니다").rstrip("요")
+
+def remove_semantic_duplicates(sentences):
+    seen = set()
+    result = []
+    for s in sentences:
+        norm = normalize_sentence(s)
+        if norm not in seen:
+            seen.add(norm)
+            result.append(s)
+    return result
+
+
 # 텍스트 요약
 def summarize_text(text_list: List[str], category: str) -> str:
     if not text_list:
         return "환자의 전반적인 건강 상태는 안정적입니다." if category == "health" else "정보 없음."
 
+    # ✅ 중복 문장 제거
+    text_list = remove_semantic_duplicates(text_list)
+
     text = " ".join(text_list)
     try:
-        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
-        summary_ids = model.generate(
-            inputs["input_ids"],
-            max_length=50,
-            min_length=10,
-            num_beams=4,
-            repetition_penalty=2.0,
-            no_repeat_ngram_size=3,
-            early_stopping=True
-        )
+        with torch.no_grad():  # ✅ 리소스 최적화
+            inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+            summary_ids = model.generate(
+                inputs["input_ids"],
+                max_length=50,
+                min_length=10,
+                num_beams=4,
+                repetition_penalty=2.0,
+                no_repeat_ngram_size=3,
+                early_stopping=True
+            )
         return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     except Exception as e:
-        return f"{category} 요약 중 오류 발생: {str(e)}"
+        return "요약 생성 실패. 주요 내용을 검토해주세요."
 
 @app.post("/summarize")
 async def summarize_patient_data(data: PatientData):
