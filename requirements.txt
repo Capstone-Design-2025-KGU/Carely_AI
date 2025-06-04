@@ -1,7 +1,5 @@
-langchain==0.1.16
-langchain-openai==0.1.7
-langchain-community==0.0.26
-langchainhub==0.1.14
-black==24.3.0
-fastapi==0.111.0
-uvicorn==0.30.0
+fastapi==0.115.12
+langchain==0.3.25
+langchain_google_genai==2.1.5
+pydantic==2.11.5
+python-dotenv==1.1.0
