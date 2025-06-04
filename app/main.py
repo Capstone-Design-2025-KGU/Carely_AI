@@ -4,8 +4,13 @@ from transformers import AutoTokenizer, BartForConditionalGeneration
 import re
 from typing import Dict, List
 import torch
+from konlpy.tag import Okt
+
 
 app = FastAPI()
+
+okt = Okt()
+
 
 # 모델 로딩 (1회만)
 MODEL_NAME = "EbanLee/kobart-summary-v3"
@@ -49,8 +54,12 @@ def classify_notes(notes: str) -> Dict[str, List[str]]:
 
     return categorized
 
-def normalize_sentence(s):
-    return re.sub(r"\s+", "", s).replace("를", "").replace("을", "").replace("가", "").rstrip("다").rstrip("습니다").rstrip("요")
+def normalize_sentence(sentence: str) -> str:
+    # 형태소 분석 → 어간 기준으로 normalize
+    tokens = okt.pos(sentence, stem=True)  # stem=True → 동사 원형화됨
+    # 품사 중 명사(Noun), 동사(Verb), 형용사(Adjective)만 추출
+    normalized = [word for word, tag in tokens if tag in ['Noun', 'Verb', 'Adjective']]
+    return " ".join(normalized)
 
 def remove_semantic_duplicates(sentences):
     seen = set()
