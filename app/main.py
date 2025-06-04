@@ -13,10 +13,10 @@ okt = Okt()
 
 MANUAL_SYNONYM_MAP = {
     "복용": "약", "드셨": "약", "드신": "약", "복용하": "약", "투약": "약",
-    "좋아졌": "좋다", "좋아보였": "좋다", "웃": "좋다",
-    "기분": "정서", "통화": "정서", "전화": "정서",
-    "산책": "운동", "운동": "운동", "걷": "운동",
-    "소변": "배뇨", "대변": "배변", "화장실": "배변",
+    "좋아졌": "좋다", "좋아보였": "좋다", "웃": "좋다", "미소": "좋다",
+    "기분": "정서", "통화": "정서", "전화": "정서", "이야기": "정서",
+    "산책": "운동", "운동": "운동", "걷": "운동", "돌다": "운동",
+    "소변": "배뇨", "대변": "배변", "화장실": "배변", "볼일": "배변",
     "기침": "기침", "咳": "기침", "콜록": "기침"
 }
 
@@ -63,17 +63,45 @@ def classify_notes(notes: str) -> Dict[str, List[str]]:
     return categorized
 
 def normalize_sentence(sentence: str) -> str:
-    tokens = okt.pos(sentence, stem=True)  # stem=True → 동사 원형화됨
+    tokens = okt.pos(sentence, stem=True)
+
+    # ✅ 보조 동사/형용사 제거용
+    AUX_VERBS = ["보이다", "되다", "하다", "있다", "없다", "싶다", "않다"]
+    PARTICLES = ["은", "는", "이", "가", "을", "를", "에", "에서", "도", "고", "과", "와"]
+
     normalized = []
     for word, tag in tokens:
-        if tag in ['Noun', 'Verb', 'Adjective']:
-            base = word
-            for key, val in MANUAL_SYNONYM_MAP.items():
-                if key in word:
-                    base = val
-                    break
-            normalized.append(base)
-    return " ".join(normalized)
+        if tag not in ['Noun', 'Verb', 'Adjective']:
+            continue
+
+        base = word
+
+        # ✅ 동의어 매핑
+        for key, val in MANUAL_SYNONYM_MAP.items():
+            if key in word:
+                base = val
+                break
+
+        # ✅ 조사 제거
+        if base in PARTICLES:
+            continue
+
+        # ✅ 보조 동사 제거
+        if base in AUX_VERBS:
+            continue
+
+        normalized.append(base)
+
+    # ✅ 중복 단어 제거 (ex. "좋다 좋다" → "좋다")
+    seen = set()
+    cleaned = []
+    for w in normalized:
+        if w not in seen:
+            seen.add(w)
+            cleaned.append(w)
+
+    return " ".join(cleaned)
+
 
 def remove_semantic_duplicates(sentences):
     seen = set()
