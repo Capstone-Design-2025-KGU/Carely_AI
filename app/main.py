@@ -58,4 +58,4 @@ Memo:
         print("Content:", content)
         raise HTTPException(status_code=500, detail="Invalid JSON format from LLM response")
 
-    return {"summary": parsed}
+    return parsed

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: ai
-          image: whrjsgml0000/carely_ai:1.0.1
+          image: whrjsgml0000/carely_ai:1.0.3
           ports:
             - containerPort: 8000
           envFrom:
